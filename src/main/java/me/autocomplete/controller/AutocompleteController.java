@@ -5,7 +5,6 @@ import me.autocomplete.service.AutocompleteService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
 @RestController
 public class AutocompleteController {
 
@@ -15,12 +14,14 @@ public class AutocompleteController {
         this.autocompleteService = autocompleteService;
     }
 
+    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @GetMapping("/autocomplete")
     public List<Completion> autocomplete(@RequestParam String prefix) {
         return autocompleteService.getCompletions(prefix);
     }
 
     @GetMapping("/health")
+    @CrossOrigin(origins = "*", allowedHeaders = "*")
     public String health() {
         return "OK";
     }
