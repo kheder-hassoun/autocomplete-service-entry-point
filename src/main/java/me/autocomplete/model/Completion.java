@@ -1,12 +1,28 @@
 package me.autocomplete.model;
 
-import lombok.Data;
-
-import java.time.Instant;
-
-@Data
 public class Completion {
     private String query;
-    private long frequency;
-    private String last_updated;
+    private int frequency;
+
+    public Completion() {}
+    public Completion(String query, int frequency) {
+        this.query = query;
+        this.frequency = frequency;
+    }
+
+    public String getQuery() {
+        return query;
+    }
+
+    public void setQuery(String query) {
+        this.query = query;
+    }
+
+    public int getFrequency() {
+        return frequency;
+    }
+
+    public void setFrequency(int frequency) {
+        this.frequency = frequency;
+    }
 }

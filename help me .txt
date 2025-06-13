@@ -1,5 +1,3 @@
 to build run this
 mvn clean package -DskipTests
 
-
-this repo have the NerService which is the exact file locate in policy-service :
