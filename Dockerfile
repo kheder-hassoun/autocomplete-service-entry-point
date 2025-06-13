@@ -4,6 +4,6 @@ WORKDIR /app
 
 COPY target/*.jar app.jar
 
-EXPOSE 8082  # optional but useful for documentation
+EXPOSE 8082
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
