@@ -1,51 +1,39 @@
 package me.autocomplete.service;
 
 import me.autocomplete.model.Completion;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class AutocompleteService {
+    private static final Logger logger = LoggerFactory.getLogger(AutocompleteService.class);
+    private final RedisTemplate<String, Object> redisTemplate;
 
-    private final MongoTemplate mongoTemplate;
-    private final NerService nerService;
-
-    @Value("${autocomplete.collection}")
-    private String collectionName;
-
-    public AutocompleteService(MongoTemplate mongoTemplate) {
-        this.mongoTemplate = mongoTemplate;
-        this.nerService = new NerService(); // Initialize the same NER logic used in PolicyService
+    public AutocompleteService(RedisTemplate<String, Object> redisTemplate) {
+        this.redisTemplate = redisTemplate;
     }
 
     public List<Completion> getCompletions(String prefix) {
-        // Generalize the prefix using NER (same logic used in PolicyService)
-        String generalizedPrefix = nerService.extractKey(prefix);
-        System.out.println("Querying with generalized prefix: " + generalizedPrefix);
+        logger.info("Received autocomplete request for prefix: '{}'", prefix);
 
-        // Query MongoDB using the generalized prefix
-        Query query = new Query(Criteria.where("prefix").is(generalizedPrefix));
-        Map result = mongoTemplate.findOne(query, Map.class, collectionName);
+        try {
+            @SuppressWarnings("unchecked")
+            List<Completion> completions = (List<Completion>) redisTemplate.opsForValue().get(prefix);
 
-        if (result != null && result.containsKey("completions")) {
-            List<Map> list = (List<Map>) result.get("completions");
-            return list.stream().map(doc -> {
-                Completion c = new Completion();
-                c.setQuery((String) doc.get("query"));
-                c.setFrequency(((Number) doc.get("frequency")).longValue());
-                c.setLast_updated(doc.get("last_updated") != null ?
-                        doc.get("last_updated").toString() : null);
-                return c;
-            }).toList();
-        } else {
-            return Collections.emptyList();
+            if (completions == null) {
+                logger.warn("No completions found for prefix: '{}'", prefix);
+                return List.of(); // return empty list instead of null
+            }
+
+            logger.info("Found {} completions for prefix '{}'", completions.size(), prefix);
+            return completions;
+        } catch (Exception e) {
+            logger.error("Error while fetching completions for prefix '{}': {}", prefix, e.getMessage(), e);
+            return List.of();
         }
     }
 }
